@@ -89,14 +89,20 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
     {
         connStr = connStr.Trim('"', '\'', ' '); // Clean up accidentally pasted quotes or spaces
         
-        // If it still looks like a SQL Server fallback, ignore it on Render
-        if (connStr.Contains("SQLEXPRESS") && Environment.GetEnvironmentVariable("RENDER") == "true")
+        if (connStr.StartsWith("•"))
+        {
+            Console.WriteLine("=========================================================================");
+            Console.WriteLine("CRITICAL ERROR: You copied the hidden dots (••••••••) from the Render dashboard!");
+            Console.WriteLine("You MUST click the small 'Copy' icon next to the Internal Database URL.");
+            Console.WriteLine("=========================================================================");
+            connStr = "Host=localhost;Database=dummy;"; // Prevent parsing crash so it can print the log
+        }
+        else if (connStr.Contains("SQLEXPRESS") && Environment.GetEnvironmentVariable("RENDER") == "true")
         {
             Console.WriteLine("WARNING: SQL Server connection string detected on Render. Database connection will likely fail.");
         }
-
         // Check if the connection string is a URL (like Render provides) instead of a standard format
-        if (connStr.StartsWith("postgres://"))
+        else if (connStr.StartsWith("postgres://"))
         {
             var databaseUri = new Uri(connStr);
             var userInfo = databaseUri.UserInfo.Split(':');
