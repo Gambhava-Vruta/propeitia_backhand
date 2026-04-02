@@ -91,18 +91,28 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
         
         if (connStr.StartsWith("•"))
         {
-            Console.WriteLine("=========================================================================");
-            Console.WriteLine("CRITICAL ERROR: You copied the hidden dots (••••••••) from the Render dashboard!");
-            Console.WriteLine("You MUST click the small 'Copy' icon next to the Internal Database URL.");
-            Console.WriteLine("=========================================================================");
-            connStr = "Host=localhost;Database=dummy;"; // Prevent parsing crash so it can print the log
+            Console.Error.WriteLine("=========================================================================");
+            Console.Error.WriteLine("CRITICAL ERROR: You copied the hidden dots (••••••••) from the Render dashboard!");
+            Console.Error.WriteLine("You MUST click the small 'Copy' icon next to the Internal Database URL.");
+            Console.Error.WriteLine("=========================================================================");
+            Environment.Exit(1);
+        }
+        else if (!connStr.StartsWith("postgres://") && !connStr.Contains("=") && Environment.GetEnvironmentVariable("RENDER") == "true")
+        {
+            Console.Error.WriteLine("=========================================================================");
+            Console.Error.WriteLine("CRITICAL ERROR: The ConnectionStrings__ConnectionString provided is INVALID!");
+            Console.Error.WriteLine($"You provided: '{connStr}'");
+            Console.Error.WriteLine("This looks like just the Hostname. You MUST provide the full 'Internal Database URL' which starts with 'postgres://' !!");
+            Console.Error.WriteLine("=========================================================================");
+            Environment.Exit(1);
         }
         else if (connStr.Contains("SQLEXPRESS") && Environment.GetEnvironmentVariable("RENDER") == "true")
         {
-            Console.WriteLine("WARNING: SQL Server connection string detected on Render. Database connection will likely fail.");
+            Console.Error.WriteLine("WARNING: SQL Server connection string detected on Render. Database connection will likely fail.");
         }
+
         // Check if the connection string is a URL (like Render provides) instead of a standard format
-        else if (connStr.StartsWith("postgres://"))
+        if (connStr.StartsWith("postgres://"))
         {
             var databaseUri = new Uri(connStr);
             var userInfo = databaseUri.UserInfo.Split(':');
