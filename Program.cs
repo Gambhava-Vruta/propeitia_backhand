@@ -85,22 +85,37 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
     var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__ConnectionString") 
         ?? builder.Configuration.GetConnectionString("ConnectionString");
 
-    // Check if the connection string is a URL (like Render provides) instead of a standard format
-    if (connStr != null && connStr.StartsWith("postgres://"))
+    if (!string.IsNullOrEmpty(connStr))
     {
-        var databaseUri = new Uri(connStr);
-        var userInfo = databaseUri.UserInfo.Split(':');
-        var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
+        connStr = connStr.Trim('"', '\'', ' '); // Clean up accidentally pasted quotes or spaces
+        
+        // If it still looks like a SQL Server fallback, ignore it on Render
+        if (connStr.Contains("SQLEXPRESS") && Environment.GetEnvironmentVariable("RENDER") == "true")
         {
-            Host = databaseUri.Host,
-            Port = databaseUri.Port,
-            Username = userInfo[0],
-            Password = userInfo.Length > 1 ? userInfo[1] : "",
-            Database = databaseUri.LocalPath.TrimStart('/'),
-            SslMode = Npgsql.SslMode.Prefer,
-            TrustServerCertificate = true
-        };
-        connStr = builderDb.ToString();
+            Console.WriteLine("WARNING: SQL Server connection string detected on Render. Database connection will likely fail.");
+        }
+
+        // Check if the connection string is a URL (like Render provides) instead of a standard format
+        if (connStr.StartsWith("postgres://"))
+        {
+            var databaseUri = new Uri(connStr);
+            var userInfo = databaseUri.UserInfo.Split(':');
+            var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
+            {
+                Host = databaseUri.Host,
+                Port = databaseUri.Port,
+                Username = userInfo[0],
+                Password = userInfo.Length > 1 ? userInfo[1] : "",
+                Database = databaseUri.LocalPath.TrimStart('/'),
+                SslMode = Npgsql.SslMode.Prefer,
+                TrustServerCertificate = true
+            };
+            connStr = builderDb.ToString();
+        }
+    }
+    else
+    {
+        Console.WriteLine("CRITICAL WARNING: ConnectionStrings__ConnectionString is NULL. Check Render Environment Variables.");
     }
         
     options.UseNpgsql(connStr);
