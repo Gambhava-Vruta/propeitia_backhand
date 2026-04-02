@@ -82,9 +82,26 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddDbContext<PropertiaContext>(options =>
 {
-    // Try to get from environment variable (Render sets this directly)
     var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__ConnectionString") 
         ?? builder.Configuration.GetConnectionString("ConnectionString");
+
+    // Check if the connection string is a URL (like Render provides) instead of a standard format
+    if (connStr != null && connStr.StartsWith("postgres://"))
+    {
+        var databaseUri = new Uri(connStr);
+        var userInfo = databaseUri.UserInfo.Split(':');
+        var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = databaseUri.Host,
+            Port = databaseUri.Port,
+            Username = userInfo[0],
+            Password = userInfo.Length > 1 ? userInfo[1] : "",
+            Database = databaseUri.LocalPath.TrimStart('/'),
+            SslMode = Npgsql.SslMode.Prefer,
+            TrustServerCertificate = true
+        };
+        connStr = builderDb.ToString();
+    }
         
     options.UseNpgsql(connStr);
 });
