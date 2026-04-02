@@ -119,7 +119,7 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
             var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
             {
                 Host = databaseUri.Host,
-                Port = databaseUri.Port,
+                Port = databaseUri.Port > 0 ? databaseUri.Port : 5432,
                 Username = userInfo[0],
                 Password = userInfo.Length > 1 ? userInfo[1] : "",
                 Database = databaseUri.LocalPath.TrimStart('/'),
