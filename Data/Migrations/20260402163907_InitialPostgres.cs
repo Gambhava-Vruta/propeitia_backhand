@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Propertia.Migrations
+namespace Propertia.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,9 +16,9 @@ namespace Propertia.Migrations
                 name: "Amenities",
                 columns: table => new
                 {
-                    AmenityId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AmenityName = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    AmenityId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AmenityName = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -28,9 +29,9 @@ namespace Propertia.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CategoryName = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CategoryName = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -41,12 +42,17 @@ namespace Propertia.Migrations
                 name: "PropertyAddresses",
                 columns: table => new
                 {
-                    PropertyAddressId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    State = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    PropertyAddressId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Location = table.Column<string>(type: "text", nullable: true),
+                    City = table.Column<string>(type: "text", nullable: true),
+                    State = table.Column<string>(type: "text", nullable: true),
+                    Country = table.Column<string>(type: "text", nullable: true),
+                    SocietyName = table.Column<string>(type: "text", nullable: true),
+                    Landmark = table.Column<string>(type: "text", nullable: true),
+                    FamousArea = table.Column<string>(type: "text", nullable: true),
+                    Latitude = table.Column<double>(type: "double precision", nullable: true),
+                    Longitude = table.Column<double>(type: "double precision", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -57,9 +63,9 @@ namespace Propertia.Migrations
                 name: "TransactionTypes",
                 columns: table => new
                 {
-                    TransactionTypeId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TransactionTypeName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    TransactionTypeId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TransactionTypeName = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -70,14 +76,14 @@ namespace Propertia.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserType = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "buyer"),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    UserType = table.Column<string>(type: "text", nullable: false, defaultValue: "buyer"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -88,18 +94,18 @@ namespace Propertia.Migrations
                 name: "Properties",
                 columns: table => new
                 {
-                    PropertyId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
-                    PropertyAddressId = table.Column<int>(type: "int", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TermsAndConditions = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RequireType = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "any"),
-                    AreaSqft = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "ongoing"),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    PropertyId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
+                    PropertyAddressId = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    TermsAndConditions = table.Column<string>(type: "text", nullable: true),
+                    RequireType = table.Column<string>(type: "text", nullable: false, defaultValue: "any"),
+                    AreaSqft = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false, defaultValue: "ongoing"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -128,11 +134,11 @@ namespace Propertia.Migrations
                 name: "BHKs",
                 columns: table => new
                 {
-                    BHKId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    BHKType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TotalWashrooms = table.Column<int>(type: "int", nullable: false)
+                    BHKId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    BHKType = table.Column<string>(type: "text", nullable: false),
+                    TotalWashrooms = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -149,8 +155,8 @@ namespace Propertia.Migrations
                 name: "PropertyAmenities",
                 columns: table => new
                 {
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    AmenityId = table.Column<int>(type: "int", nullable: false)
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    AmenityId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -173,11 +179,11 @@ namespace Propertia.Migrations
                 name: "PropertyImages",
                 columns: table => new
                 {
-                    ImageId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ImageId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    ImagePath = table.Column<string>(type: "text", nullable: true),
+                    UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -194,12 +200,14 @@ namespace Propertia.Migrations
                 name: "PropertyInquiries",
                 columns: table => new
                 {
-                    InquiryId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    InquiryDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    InquiryId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    Message = table.Column<string>(type: "text", nullable: true),
+                    InquiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OwnerReply = table.Column<string>(type: "text", nullable: true),
+                    ReplyDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -222,25 +230,21 @@ namespace Propertia.Migrations
                 name: "PropertyPrices",
                 columns: table => new
                 {
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    TransactionTypeId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    PropertyId1 = table.Column<int>(type: "int", nullable: true)
+                    PropertyPriceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    TransactionTypeId = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(12,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PropertyPrices", x => x.PropertyId);
+                    table.PrimaryKey("PK_PropertyPrices", x => x.PropertyPriceId);
                     table.ForeignKey(
                         name: "FK_PropertyPrices_Properties_PropertyId",
                         column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "PropertyId",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PropertyPrices_Properties_PropertyId1",
-                        column: x => x.PropertyId1,
-                        principalTable: "Properties",
-                        principalColumn: "PropertyId");
                     table.ForeignKey(
                         name: "FK_PropertyPrices_TransactionTypes_TransactionTypeId",
                         column: x => x.TransactionTypeId,
@@ -303,9 +307,10 @@ namespace Propertia.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PropertyPrices_PropertyId1",
+                name: "IX_PropertyPrices_PropertyId_TransactionTypeId",
                 table: "PropertyPrices",
-                column: "PropertyId1");
+                columns: new[] { "PropertyId", "TransactionTypeId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyPrices_TransactionTypeId",

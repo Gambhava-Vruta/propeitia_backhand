@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace Propertia.Models
@@ -8,8 +8,10 @@ namespace Propertia.Models
         public PropertiaContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<PropertiaContext>();
-            optionsBuilder.UseSqlServer(
-                "Server=LAPTOP-7P28N3H4\\SQLEXPRESS;Database=Propertia_database;Trusted_Connection=True;TrustServerCertificate=True"
+            // Use a dummy Postgres connection string for design-time (EF migrations CLI).
+            // At runtime, the real connection string comes from environment variables on Render.
+            optionsBuilder.UseNpgsql(
+                "Host=localhost;Database=propertia_dev;Username=postgres;Password=postgres"
             );
 
             return new PropertiaContext(optionsBuilder.Options);

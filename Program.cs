@@ -81,11 +81,23 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 //builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddDbContext<PropertiaContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString"))
-);
+{
+    // Try to get from environment variable (Render sets this directly)
+    var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__ConnectionString") 
+        ?? builder.Configuration.GetConnectionString("ConnectionString");
+        
+    options.UseNpgsql(connStr);
+});
 var app = builder.Build();
 app.UseCors("AllowReactApp");
 app.UseStaticFiles();
+
+// Apply any pending migrations automatically on startup (Critical for Render deployment)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PropertiaContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 // Swagger enabled in all environments for demo/testing purposes
