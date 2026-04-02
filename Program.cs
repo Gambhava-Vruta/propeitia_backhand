@@ -97,7 +97,7 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
             Console.Error.WriteLine("=========================================================================");
             Environment.Exit(1);
         }
-        else if (!connStr.StartsWith("postgres://") && !connStr.Contains("=") && Environment.GetEnvironmentVariable("RENDER") == "true")
+        else if (!connStr.StartsWith("postgres://") && !connStr.StartsWith("postgresql://") && !connStr.Contains("=") && Environment.GetEnvironmentVariable("RENDER") == "true")
         {
             Console.Error.WriteLine("=========================================================================");
             Console.Error.WriteLine("CRITICAL ERROR: The ConnectionStrings__ConnectionString provided is INVALID!");
@@ -112,7 +112,7 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
         }
 
         // Check if the connection string is a URL (like Render provides) instead of a standard format
-        if (connStr.StartsWith("postgres://"))
+        if (connStr.StartsWith("postgres://") || connStr.StartsWith("postgresql://"))
         {
             var databaseUri = new Uri(connStr);
             var userInfo = databaseUri.UserInfo.Split(':');
