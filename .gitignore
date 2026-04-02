@@ -5,3 +5,4 @@ temp_build/
 *.user
 *.db
 *.vsidx
+appsettings.Development.json
