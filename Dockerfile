@@ -17,6 +17,9 @@ COPY --from=build /app .
 
 # Set Render PORT environment variables
 ENV ASPNETCORE_URLS=http://+:80
+# Reduce memory usage on Render free tier (512MB) to prevent SIGSEGV
+ENV DOTNET_gcServer=0
+ENV DOTNET_EnableDiagnostics=0
 EXPOSE 80
 
 ENTRYPOINT ["dotnet", "Propertia.dll"]

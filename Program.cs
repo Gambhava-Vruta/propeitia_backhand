@@ -128,7 +128,7 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
                 Username = Uri.UnescapeDataString(userInfo[0]),
                 Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
                 Database = databaseUri.LocalPath.TrimStart('/'),
-                SslMode = Npgsql.SslMode.Require,
+                SslMode = Npgsql.SslMode.Prefer,
                 TrustServerCertificate = true
             };
             connStr = builderDb.ToString();
@@ -146,10 +146,23 @@ app.UseCors("AllowReactApp");
 app.UseStaticFiles();
 
 // Apply any pending migrations automatically on startup (Critical for Render deployment)
-using (var scope = app.Services.CreateScope())
+try
 {
-    var db = scope.ServiceProvider.GetRequiredService<PropertiaContext>();
-    db.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<PropertiaContext>();
+        Console.WriteLine("Starting database migration...");
+        await db.Database.MigrateAsync();
+        Console.WriteLine("Database migration completed successfully.");
+    }
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"DATABASE MIGRATION FAILED: {ex.GetType().Name}: {ex.Message}");
+    Console.Error.WriteLine(ex.StackTrace);
+    if (ex.InnerException != null)
+        Console.Error.WriteLine($"Inner: {ex.InnerException.Message}");
+    throw;
 }
 
 // Configure the HTTP request pipeline.
