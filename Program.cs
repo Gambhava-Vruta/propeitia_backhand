@@ -128,8 +128,7 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
                 Username = Uri.UnescapeDataString(userInfo[0]),
                 Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
                 Database = databaseUri.LocalPath.TrimStart('/'),
-                SslMode = Npgsql.SslMode.Prefer,
-                TrustServerCertificate = true
+                SslMode = Npgsql.SslMode.Disable
             };
             connStr = builderDb.ToString();
         }
