@@ -121,9 +121,31 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
             // IMPORTANT: Uri.UserInfo does NOT automatically decode percent-encoded characters
             // e.g. %40 must be decoded back to @ for passwords containing special chars
             var userInfo = databaseUri.UserInfo.Split(':', 2);
+            
+            // Resolve hostname to IPv4 — Render free tier does NOT support IPv6
+            var dbHost = databaseUri.Host;
+            try
+            {
+                var addresses = System.Net.Dns.GetHostAddresses(dbHost);
+                var ipv4 = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                if (ipv4 != null)
+                {
+                    Console.WriteLine($"[DB] Resolved {dbHost} to IPv4: {ipv4}");
+                    dbHost = ipv4.ToString();
+                }
+                else
+                {
+                    Console.WriteLine($"[DB] WARNING: No IPv4 address found for {dbHost}, available: {string.Join(", ", addresses.Select(a => a.ToString()))}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DB] DNS resolution failed: {ex.Message}, using hostname as-is");
+            }
+            
             var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
             {
-                Host = databaseUri.Host,
+                Host = dbHost,
                 Port = databaseUri.Port > 0 ? databaseUri.Port : 5432,
                 Username = Uri.UnescapeDataString(userInfo[0]),
                 Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
@@ -160,7 +182,12 @@ try
     {
         var uri = new Uri(rawConnStr);
         var ui = uri.UserInfo.Split(':', 2);
-        rawConnStr = $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Username={Uri.UnescapeDataString(ui[0])};Password={Uri.UnescapeDataString(ui.Length > 1 ? ui[1] : "")};Database={uri.LocalPath.TrimStart('/')};SSL Mode=Disable;Timeout=30";
+        // Resolve to IPv4 for raw test too
+        var testHost = uri.Host;
+        var addrs = System.Net.Dns.GetHostAddresses(testHost);
+        var v4 = addrs.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+        if (v4 != null) testHost = v4.ToString();
+        rawConnStr = $"Host={testHost};Port={(uri.Port > 0 ? uri.Port : 5432)};Username={Uri.UnescapeDataString(ui[0])};Password={Uri.UnescapeDataString(ui.Length > 1 ? ui[1] : "")};Database={uri.LocalPath.TrimStart('/')};SSL Mode=Disable;Timeout=30";
     }
     
     using var testConn = new Npgsql.NpgsqlConnection(rawConnStr);
