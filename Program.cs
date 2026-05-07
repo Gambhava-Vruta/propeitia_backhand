@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -114,19 +114,21 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
             Console.Error.WriteLine("WARNING: SQL Server connection string detected on Render. Database connection will likely fail.");
         }
 
-        // Check if the connection string is a URL (like Render provides) instead of a standard format
+        // Check if the connection string is a URL (like Render/Supabase provides) instead of a standard format
         if (connStr.StartsWith("postgres://") || connStr.StartsWith("postgresql://"))
         {
             var databaseUri = new Uri(connStr);
-            var userInfo = databaseUri.UserInfo.Split(':');
+            // IMPORTANT: Uri.UserInfo does NOT automatically decode percent-encoded characters
+            // e.g. %40 must be decoded back to @ for passwords containing special chars
+            var userInfo = databaseUri.UserInfo.Split(':', 2);
             var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
             {
                 Host = databaseUri.Host,
                 Port = databaseUri.Port > 0 ? databaseUri.Port : 5432,
-                Username = userInfo[0],
-                Password = userInfo.Length > 1 ? userInfo[1] : "",
+                Username = Uri.UnescapeDataString(userInfo[0]),
+                Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
                 Database = databaseUri.LocalPath.TrimStart('/'),
-                SslMode = Npgsql.SslMode.Prefer,
+                SslMode = Npgsql.SslMode.Require,
                 TrustServerCertificate = true
             };
             connStr = builderDb.ToString();
