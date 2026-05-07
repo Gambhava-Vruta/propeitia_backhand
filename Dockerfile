@@ -1,5 +1,5 @@
-# Build Stage - Alpine for smaller image
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+# Build Stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source
 
 # Copy csproj and restore
@@ -10,8 +10,8 @@ RUN dotnet restore
 COPY . .
 RUN dotnet publish -c Release -o /app
 
-# Run Stage - Alpine uses musl + different OpenSSL (avoids SIGSEGV)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
+# Run Stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app .
 
@@ -20,6 +20,8 @@ ENV ASPNETCORE_URLS=http://+:80
 # Reduce memory usage on Render free tier (512MB) to prevent OOM
 ENV DOTNET_gcServer=0
 ENV DOTNET_EnableDiagnostics=0
+# Use invariant globalization to save ~30MB
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 EXPOSE 80
 
 ENTRYPOINT ["dotnet", "Propertia.dll"]

@@ -128,9 +128,13 @@ builder.Services.AddDbContext<PropertiaContext>(options =>
                 Username = Uri.UnescapeDataString(userInfo[0]),
                 Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
                 Database = databaseUri.LocalPath.TrimStart('/'),
-                SslMode = Npgsql.SslMode.Disable
+                SslMode = Npgsql.SslMode.Disable,
+                Timeout = 30
             };
             connStr = builderDb.ToString();
+            
+            // Log parsed connection details (NOT the password) for debugging
+            Console.WriteLine($"[DB] Parsed connection: Host={builderDb.Host}, Port={builderDb.Port}, User={builderDb.Username}, DB={builderDb.Database}, SSL={builderDb.SslMode}");
         }
     }
     else
@@ -144,23 +148,54 @@ var app = builder.Build();
 app.UseCors("AllowReactApp");
 app.UseStaticFiles();
 
-// Apply any pending migrations automatically on startup (Critical for Render deployment)
+// Step 1: Test raw TCP connectivity
+Console.WriteLine("[DB] Step 1: Testing raw database connection...");
+try
+{
+    var rawConnStr = Environment.GetEnvironmentVariable("ConnectionStrings__ConnectionString") 
+        ?? builder.Configuration.GetConnectionString("ConnectionString") ?? "";
+    
+    // Build a simple ADO.NET connection string for the raw test
+    if (rawConnStr.StartsWith("postgres://") || rawConnStr.StartsWith("postgresql://"))
+    {
+        var uri = new Uri(rawConnStr);
+        var ui = uri.UserInfo.Split(':', 2);
+        rawConnStr = $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Username={Uri.UnescapeDataString(ui[0])};Password={Uri.UnescapeDataString(ui.Length > 1 ? ui[1] : "")};Database={uri.LocalPath.TrimStart('/')};SSL Mode=Disable;Timeout=30";
+    }
+    
+    using var testConn = new Npgsql.NpgsqlConnection(rawConnStr);
+    Console.WriteLine("[DB] Step 1a: Opening raw Npgsql connection...");
+    testConn.Open();
+    Console.WriteLine($"[DB] Step 1b: Connected! Server version: {testConn.ServerVersion}");
+    testConn.Close();
+    Console.WriteLine("[DB] Step 1c: Raw connection test PASSED.");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"[DB] Step 1 FAILED: {ex.GetType().Name}: {ex.Message}");
+    if (ex.InnerException != null)
+        Console.Error.WriteLine($"[DB] Inner: {ex.InnerException.Message}");
+    // Don't throw - let migration try anyway and give its own error
+}
+
+// Step 2: Apply pending migrations
+Console.WriteLine("[DB] Step 2: Starting EF Core migration...");
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<PropertiaContext>();
-        Console.WriteLine("Starting database migration...");
+        Console.WriteLine("[DB] Step 2a: Got DbContext, calling MigrateAsync...");
         await db.Database.MigrateAsync();
-        Console.WriteLine("Database migration completed successfully.");
+        Console.WriteLine("[DB] Step 2b: Database migration completed successfully!");
     }
 }
 catch (Exception ex)
 {
-    Console.Error.WriteLine($"DATABASE MIGRATION FAILED: {ex.GetType().Name}: {ex.Message}");
+    Console.Error.WriteLine($"[DB] Step 2 FAILED: {ex.GetType().Name}: {ex.Message}");
     Console.Error.WriteLine(ex.StackTrace);
     if (ex.InnerException != null)
-        Console.Error.WriteLine($"Inner: {ex.InnerException.Message}");
+        Console.Error.WriteLine($"[DB] Inner: {ex.InnerException.Message}");
     throw;
 }
 
